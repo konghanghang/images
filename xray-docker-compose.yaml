@@ -1,0 +1,30 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:1.22.0
+    restart: always
+    container_name: nginx
+    environment:
+      # 自定义host
+      - XRAY_HOST=${XRAY_HOST}
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/html:/usr/share/nginx/html
+    depends_on:
+      - xray
+  xray:
+    image: teddysun/xray:1.5.6
+    restart: always
+    container_name: xray
+    environment:
+      # 自定义host
+      - XRAY_HOST=${XRAY_HOST}
+    ports:
+      - 443:443
+    volumes:
+      - ./xray/config.json:/etc/xray/config.json
+      # 证书地址
+      - /etc/letsencrypt/:/etc/letsencrypt/

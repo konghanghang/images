@@ -1,0 +1,67 @@
+{
+    "log": {
+      "loglevel": "warning",
+      "access": "/var/log/xray/access.log",
+      "error": "/var/log/xray/error.log"
+    },
+    "routing": null,
+    "dns": null,
+    "inbounds": [
+      {
+        "listen": null,
+        "port": 443,
+        "protocol": "vless",
+        "settings": {
+          "clients": [
+            {
+              "id": "e0bea2e8-baac-4311-e5ef-04a965f99d77",
+              "flow": "xtls-rprx-direct",
+              "level": 0,
+              "email": "konghang@test.me"
+            }
+          ],
+          "decryption": "none",
+          "fallbacks": [
+            {
+              "alpn": "h2",
+              "dest": "nginx:22220",
+              "xver": 1
+            },
+            {
+              "dest": "nginx:22226",
+              "xver": 1
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "xtls",
+          "xtlsSettings": {
+            "alpn": [
+              "h2",
+              "http/1.1"
+            ],
+            "certificates": [
+              {
+                "certificateFile": "/etc/letsencrypt/live/${XRAY_HOST}/fullchain.pem",
+                "keyFile": "/etc/letsencrypt/live/${XRAY_HOST}/privkey.pem"
+              }
+            ]
+          }
+        },
+        "tag": "",
+        "sniffing": null
+      }
+    ],
+    "outbounds": [
+      {
+        "protocol": "freedom"
+      }
+    ],
+    "transport": null,
+    "policy": null,
+    "api": null,
+    "stats": null,
+    "reverse": null,
+    "fakeDns": null
+  }

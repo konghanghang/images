@@ -1,0 +1,191 @@
+{
+    "log": {
+      "loglevel": "warning",
+      "access": "/var/log/xray/access.log",
+      "error": "/var/log/xray/error.log"
+    },
+    "routing": null,
+    "dns": null,
+    "inbounds": [
+      {
+        "listen": null,
+        "port": 443,
+        "protocol": "vless",
+        "settings": {
+          "clients": [
+            {
+              "id": "e0bea2e8-baac-4311-e5ef-04a965f99d77",
+              "flow": "xtls-rprx-direct",
+              "level": 0,
+              "email": "konghang@ml520.me"
+            }
+          ],
+          "decryption": "none",
+          "fallbacks": [
+            {
+              "alpn": "h2",
+              "dest": "nginx:22220",
+              "xver": 1
+            },
+            {
+              "dest": 22221,
+              "xver": 1
+            },
+            {
+              "path": "/websocket",
+              "dest": 22222,
+              "xver": 1
+            },
+            {
+              "path": "/vmesstcp",
+              "dest": 22223,
+              "xver": 1
+            },
+            {
+              "path": "/vmessws",
+              "dest": 22224,
+              "xver": 1
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "xtls",
+          "xtlsSettings": {
+            "alpn": [
+              "h2",
+              "http/1.1"
+            ],
+            "certificates": [
+              {
+                "certificateFile": "/etc/letsencrypt/live/${HOST}/fullchain.pem",
+                "keyFile": "/etc/letsencrypt/live/${HOST}/privkey.pem"
+              }
+            ]
+          }
+        },
+        "tag": "",
+        "sniffing": null
+      },
+      {
+        "listen": "127.0.0.1",
+        "port": 22221,
+        "protocol": "trojan",
+        "settings": {
+          "clients": [
+            {
+              "password": "e0bea2e8-baac-4311-e5ef-04a965f99d17",
+              "level": 0,
+              "email": "test@example.com"
+            }
+          ],
+          "fallbacks": [
+            {
+              "dest": "nginx:22226",
+              "xver": 1
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "none",
+          "tcpSettings": {
+            "acceptProxyProtocol": true
+          }
+        },
+        "tag": "",
+        "sniffing": null
+      },
+      {
+        "listen": "127.0.0.1",
+        "port": 22222,
+        "protocol": "vless",
+        "settings": {
+          "clients": [
+            {
+              "id": "e0bea2e8-baac-4311-e5ef-04a965f99d27",
+              "level": 0,
+              "email": "test@example.com"
+            }
+          ],
+          "decryption": "none"
+        },
+        "streamSettings": {
+          "network": "ws",
+          "security": "none",
+          "wsSettings": {
+            "acceptProxyProtocol": true,
+            "path": "/websocket"
+          }
+        },
+        "tag": "",
+        "sniffing": null
+      },
+      {
+        "listen": "127.0.0.1",
+        "port": 22223,
+        "protocol": "vmess",
+        "settings": {
+          "clients": [
+            {
+              "id": "e0bea2e8-baac-4311-e5ef-04a965f99d37",
+              "level": 0,
+              "email": "test@example.com"
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp",
+          "security": "none",
+          "tcpSettings": {
+            "acceptProxyProtocol": true,
+            "header": {
+              "type": "http",
+              "request": {
+                "path": [
+                  "/vmesstcp"
+                ]
+              }
+            }
+          }
+        },
+        "tag": "",
+        "sniffing": null
+      },
+      {
+        "listen": "127.0.0.1",
+        "port": 22224,
+        "protocol": "vmess",
+        "settings": {
+          "clients": [
+            {
+              "id": "e0bea2e8-baac-4311-e5ef-04a965f99d47",
+              "level": 0,
+              "email": "test@example.com"
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "ws",
+          "security": "none",
+          "wsSettings": {
+            "acceptProxyProtocol": true,
+            "path": "/vmessws"
+          }
+        },
+        "tag": "",
+        "sniffing": null
+      }
+    ],
+    "outbounds": [
+      {
+        "protocol": "freedom"
+      }
+    ],
+    "transport": null,
+    "policy": null,
+    "api": null,
+    "stats": null,
+    "reverse": null,
+    "fakeDns": null
+  }
