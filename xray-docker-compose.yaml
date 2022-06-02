@@ -1,6 +1,7 @@
 version: '3'
 networks:
   mynet:
+    external: true
 services:
   nginx:
     image: nginx:1.22.0
