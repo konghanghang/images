@@ -1,0 +1,48 @@
+version: '3'
+networks:
+  mynet:
+    external: true
+services:
+  swag:
+    build: 
+      context: ./swag
+      dockerfile: Dockerfile
+    image: swag:1.27.0
+    restart: always
+    container_name: swag
+    cap_add:
+      - NET_ADMIN
+    environment:
+      # 自定义host
+      - URL=${XRAY_HOST}
+      - PUID=1000
+      - PGID=1000
+      # 多个用英文逗号隔开
+      - SUBDOMAINS=test
+      - VALIDATION=dns
+      - DNSPLUGIN=aliyun
+      - EMAIL=yslao@outlook.com
+      - ONLY_SUBDOMAINS=true
+      - TZ=Asia/Shanghai
+    ports:
+      - 80:80
+    networks:
+      - mynet
+    volumes:
+      - ./config:/config
+  xray:
+    image: teddysun/xray:1.5.6
+    restart: always
+    container_name: xray
+    ports:
+      - 443:443
+      - 22220:22220
+      - 22226:22226
+    networks:
+      - mynet
+    volumes:
+      - ./xray/config.json:/etc/xray/config.json
+      # 证书地址, 对应swag生成的证书目录
+      - ./config:/config
+    depends_on:
+      - swag
