@@ -7,11 +7,11 @@ server {
     listen 80 default_server;
     listen [::]:80 default_server;
     server_name _;
-    # return 301 https://$host$request_uri;
-    root /config/www;
-    location / {
-        try_files $uri $uri/ /index.html ;
-    }
+    return 301 https://$host$request_uri;
+    #root /config/www;
+    #location / {
+    #    try_files $uri $uri/ /index.html ;
+    #}
 }
 
 # main server block
