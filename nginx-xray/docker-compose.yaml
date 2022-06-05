@@ -29,8 +29,6 @@ services:
       - XRAY_HOST=${XRAY_HOST}
     ports:
       - 443:443
-      - 22220:22220
-      - 22226:22226
     networks:
       - mynet
     volumes:
