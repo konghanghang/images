@@ -1,4 +1,4 @@
-FROM ghcr.io/linuxserver/baseimage-alpine-nginx:3.14
+FROM ghcr.io/linuxserver/baseimage-alpine-nginx:arm32v7-3.14
 
 # set version label
 # ARG BUILD_DATE
@@ -91,7 +91,6 @@ RUN \
     certbot-dns-standalone \
     certbot-dns-transip \
     certbot-dns-vultr \
-    certbot-dns-desec \
     certbot-plugin-gandi \
     cryptography \
     requests && \
