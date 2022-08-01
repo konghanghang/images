@@ -4,7 +4,7 @@ networks:
     external: true
 services:
   swag:
-    build: 
+    build:
       context: ./swag
       dockerfile: Dockerfile
     image: swag:1.27.0
@@ -18,10 +18,9 @@ services:
       - PUID=1000
       - PGID=1000
       # 多个用英文逗号隔开
-      - SUBDOMAINS=test
-      - VALIDATION=dns
-      - DNSPLUGIN=aliyun
-      - EMAIL=yslao@outlook.com
+      - SUBDOMAINS=${XRAY_SUBDOMAIN}
+      - VALIDATION=http
+      - EMAIL=${EMAIL}
       - ONLY_SUBDOMAINS=true
       - TZ=Asia/Shanghai
       - XRAY_SUBDOMAIN=${XRAY_SUBDOMAIN}
@@ -37,8 +36,6 @@ services:
     container_name: xray
     ports:
       - 443:443
-      - 22220:22220
-      - 22226:22226
     networks:
       - mynet
     volumes:
