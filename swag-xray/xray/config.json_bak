@@ -1,0 +1,234 @@
+{
+  "log": {
+    "loglevel": "warning",
+    "access": "/var/log/xray/access.log",
+    "error": "/var/log/xray/error.log"
+  },
+  "api": {
+    "services": [
+      "HandlerService",
+      "LoggerService",
+      "StatsService"
+    ],
+    "tag": "api"
+  },
+  "inbounds": [
+    {
+      "port": 443,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "aabea2e8-baac-4311-e5ef-04a965f99d77",
+            "flow": "xtls-rprx-direct",
+            "level": 0,
+            "email": "kh@test.me"
+          },
+          {
+            "id": "bbbea2e8-baac-4311-e5ef-04a965f99d77",
+            "flow": "xtls-rprx-direct",
+            "level": 0,
+            "email": "ws@test.me"
+          },
+          {
+            "id": "ccbea2e8-baac-4311-e5ef-04a965f99d77",
+            "flow": "xtls-rprx-direct",
+            "level": 0,
+            "email": "jq@test.me"
+          },
+          {
+            "id": "ddbea2e8-baac-4311-e5ef-04a965f99d77",
+            "flow": "xtls-rprx-direct",
+            "level": 0,
+            "email": "lc@test.me"
+          },
+          {
+            "id": "eebea2e8-baac-4311-e5ef-04a965f99d77",
+            "flow": "xtls-rprx-direct",
+            "level": 0,
+            "email": "xf@test.me"
+          }
+        ],
+        "decryption": "none",
+        "fallbacks": [
+          {
+            "dest": 13100,
+            "xver": 1
+          },
+          {
+            "path": "/vlessws13101",
+            "dest": 13101,
+            "xver": 1
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "xtls",
+        "xtlsSettings": {
+          "alpn": [
+            "http/1.1"
+          ],
+          "certificates": [
+            {
+              "certificateFile": "/config/keys/letsencrypt/fullchain.pem",
+              "keyFile": "/config/keys/letsencrypt/privkey.pem"
+            }
+          ]
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls"
+        ]
+      }
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": 13099,
+      "protocol": "socks",
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls"
+        ]
+      }
+    },
+    {
+      "port": 13100,
+      "listen": "127.0.0.1",
+      "protocol": "trojan",
+      "settings": {
+        "clients": [
+          {
+            "password": "c541c9fe-fa75-4b28-d839-497a28a41de3",
+            "level": 0,
+            "email": "trojan@test.com"
+          }
+        ],
+        "fallbacks": [
+          {
+            "dest": "swag:80"
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "none",
+        "tcpSettings": {
+          "acceptProxyProtocol": true
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls"
+        ]
+      }
+    },
+    {
+      "port": 13101,
+      "listen": "127.0.0.1",
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "c541c9fe-fa75-4b28-d839-497a28a41de2",
+            "level": 0,
+            "email": "vlessws@test.com"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "ws",
+        "security": "none",
+        "wsSettings": {
+          "acceptProxyProtocol": true,
+          "path": "/vlessws13101"
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls"
+        ]
+      }
+    },
+    {
+      "listen": "127.0.0.1",
+      "port": 13102,
+      "protocol": "shadowsocks",
+      "settings": {
+        "method": "aes-256-gcm",
+        "password": "c541c9fe-fa75-4b28-d839-497a28a41de3"
+      },
+      "streamSettings": {
+        "network": "tcp"
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "IP4_out",
+      "protocol": "freedom",
+      "settings": {}
+    },
+    {
+      "tag": "IP6_out",
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIPv6"
+      }
+    },
+    {
+      "protocol": "shadowsocks",
+      "settings": {
+        "servers": [
+          {
+            "address": "1.1.1.1",
+            "port": 13102,
+            "method": "aes-256-gcm",
+            "password": "c541c9fe-fa75-4b28-d839-497a28a41de3"
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp"
+      },
+      "tag": "shadowsocks-netflix"
+    }
+  ],
+  "routing": {
+    "rules": [
+      {
+        "type": "field",
+        "outboundTag": "IP4_out",
+        "domain": [
+          "geosite:netflix"
+        ]
+      },
+      {
+        "type": "field",
+        "outboundTag": "IP4_out",
+        "network": "udp,tcp"
+      }
+    ]
+  },
+  "policy": {
+    "statsInboundUplink": true,
+    "statsInboundDownlink": true,
+    "statsOutboundUplink": true,
+    "statsOutboundDownlink": true
+  },
+  "dns": null,
+  "transport": null,
+  "stats": {},
+  "reverse": null,
+  "fakeDns": null
+}

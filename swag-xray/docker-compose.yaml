@@ -1,0 +1,47 @@
+version: '3'
+networks:
+  mynet:
+    external: true
+services:
+  swag:
+    image: konghanghang/swag:1.27.0
+    restart: unless-stopped
+    container_name: swag
+    cap_add:
+      - NET_ADMIN
+    environment:
+      # 自定义host
+      - URL=${URL}
+      - PUID=1000
+      - PGID=1000
+      # 多个用英文逗号隔开
+      - SUBDOMAINS=${XRAY_SUBDOMAIN}
+      - VALIDATION=http
+      # 默认读取.env中的变量
+      - EMAIL={EMAIL}
+      - ONLY_SUBDOMAINS=true
+      - TZ=Asia/Shanghai
+      - XRAY_SUBDOMAIN={XRAY_SUBDOMAIN}
+    ports:
+      - 80:80
+    networks:
+      - mynet
+    volumes:
+      - ./config:/config
+  xray:
+    image: teddysun/xray:1.7.5
+    restart: unless-stopped
+    container_name: xray
+    ports:
+      - 443:443
+      # 暴露ss服务，解锁netflix
+      #- 13102:13102
+    networks:
+      - mynet
+    volumes:
+      - ./xray/config.json:/etc/xray/config.json
+      - ./xray/log:/var/log/xray
+      # 证书地址, 对应swag生成的证书目录
+      - ./config:/config
+    depends_on:
+      - swag

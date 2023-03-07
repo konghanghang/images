@@ -1,0 +1,79 @@
+{
+    "clients":[
+        {
+            "name": "Clash for Windows",
+            "tagMethod": "github_release",
+            "gitRepo": "Fndroid/clash_for_windows_pkg",
+            "savePath": "public/clients/",
+            "downloads": [
+                {
+                    "sourceName": "Clash.for.Windows.Setup.%tagName%.exe",
+                    "saveName": "Clash-Windows.exe",
+                    "apkpureUrl": ""
+                },
+                {
+                    "sourceName": "Clash.for.Windows-%tagName%.dmg",
+                    "saveName": "Clash-Windows.dmg",
+                    "apkpureUrl": ""
+                },
+                {
+                    "sourceName": "Clash.for.Windows-%tagName%-x64-linux.tar.gz",
+                    "saveName": "Clash-Windows.tar.gz",
+                    "apkpureUrl": ""
+                }
+            ]
+        },
+        {
+            "name": "ClashX",
+            "tagMethod": "github_release",
+            "gitRepo": "yichengchen/clashX",
+            "savePath": "public/clients/",
+            "downloads": [
+                {
+                    "sourceName": "ClashX.dmg",
+                    "saveName": "ClashX.dmg",
+                    "apkpureUrl": ""
+                }
+            ]
+        },
+        {
+            "name": "Clash for Android",
+            "tagMethod": "github_pre_release",
+            "gitRepo": "Kr328/ClashForAndroid",
+            "savePath": "public/clients/",
+            "downloads": [
+                {
+                    "sourceName": "cfa-%tagName1%-premium-universal-release.apk",
+                    "saveName": "Clash-Android.apk",
+                    "apkpureUrl": ""
+                }
+            ]
+        },
+        {
+            "name": "v2rayN",
+            "tagMethod": "github_pre_release",
+            "gitRepo": "2dust/v2rayN",
+            "savePath": "public/clients/",
+            "downloads": [
+                {
+                    "sourceName": "v2rayN-With-Core.zip",
+                    "saveName": "v2rayN-Core.zip",
+                    "apkpureUrl": ""
+                }
+            ]
+        },
+        {
+            "name": "v2rayNG",
+            "tagMethod": "github_pre_release",
+            "gitRepo": "2dust/v2rayNG",
+            "savePath": "public/clients/",
+            "downloads": [
+                {
+                    "sourceName": "v2rayNG_%tagName%.apk",
+                    "saveName": "v2rayNG.apk",
+                    "apkpureUrl": ""
+                }
+            ]
+        }
+    ]
+}

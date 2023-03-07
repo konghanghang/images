@@ -1,0 +1,54 @@
+{
+  admin off
+  http_port ${NAVIE_HTTP_PORT}
+  https_port ${NAVIE_HTTPS_PORT}
+  log {
+      output file /var/log/caddy/access.log
+      level INFO
+  }
+  servers :${NAVIE_HTTP_PORT},:${NAVIE_HTTPS_PORT} {
+      protocols h1 h2 h3
+  }
+}
+
+:${NAVIE_HTTP_PORT} {
+  log {
+    output file /var/log/access.log {
+      roll_size 1gb
+      roll_keep 5
+      roll_keep_for 720h
+    }
+  }
+  route {
+      @websockets13102 {
+          path /vmessws13102
+          header Connection *Upgrade*
+          header Upgrade    websocket
+      }
+      reverse_proxy @websockets13102 xray:13102
+      reverse_proxy ${NAVIE_PROXY_HOST}
+  }
+}
+
+:${NAVIE_HTTPS_PORT}, ${NAVIE_SSL_HOST} {
+  tls ${NAVIE_SSL_MAIL}
+  log {
+    output file /var/log/access.log {
+      roll_size 1gb
+      roll_keep 5
+      roll_keep_for 720h
+    }
+  }
+  route {
+    forward_proxy {
+        basic_auth useryslao c16f7d819665
+        hide_ip
+        hide_via
+        probe_resistance rP7uSWkJpZzfg5g2Qr.com
+    }
+    reverse_proxy  https://${NAVIE_PROXY_HOST}  {
+        header_up  Host  {upstream_hostport}
+        header_up  X-Forwarded-Host  {host}
+    }
+  }
+}

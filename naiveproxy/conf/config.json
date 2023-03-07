@@ -1,0 +1,131 @@
+{
+    "admin": {
+        "disabled": true
+    },
+    "logging": {
+        "logs": {
+            "default": {
+                "writer": {
+                    "filename": "/var/log/caddy/access.log",
+                    "output": "file"
+                },
+                "level": "INFO"
+            }
+        }
+    },
+    "apps": {
+        "http": {
+            "servers": {
+                "srv0": {
+                    "listen": [
+                        ":443"
+                    ],
+                    "routes": [
+                        {
+                            "handle": [
+                                {
+                                    "handler": "subroute",
+                                    "routes": [
+                                        {
+                                            "handle": [
+                                                {
+                                                    "auth_pass_deprecated": "usertest01password",
+                                                    "auth_user_deprecated": "usertest01",
+                                                    "handler": "forward_proxy",
+                                                    "hide_ip": true,
+                                                    "hide_via": true,
+                                                    "probe_resistance": {
+                                                        "domain": "rP7uSWkJpZzfg5g2Qr.com"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "handle": [
+                                              {
+                                                "handler": "reverse_proxy",
+                                                "headers": {
+                                                  "request": {
+                                                    "set": {
+                                                      "Host": [
+                                                        "{http.reverse_proxy.upstream.hostport}"
+                                                      ],
+                                                      "X-Forwarded-Host": [
+                                                        "{http.request.host}"
+                                                      ]
+                                                    }
+                                                  }
+                                                },
+                                                "transport": {
+                                                  "protocol": "http",
+                                                  "tls": {}
+                                                },
+                                                "upstreams": [
+                                                  {
+                                                    "dial": "demo.cloudreve.org:443"
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    "protocols": [
+                        "h1",
+                        "h2",
+                        "h3"
+                    ]
+                },
+                "srv1": {
+                    "listen": [
+                        ":80"
+                    ],
+                    "routes": [
+                        {
+                            "handle": [
+                                {
+                                    "handler": "static_response",
+                                    "headers": {
+                                        "Location": [
+                                            "https://{http.request.host}{http.request.uri}"
+                                        ]
+                                    },
+                                    "status_code": 301
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        "tls": {
+            "certificates": {
+                "automate": [
+                    "your_domain.com"
+                ]
+            },
+            "automation": {
+                "policies": [
+                    {
+                        "subjects": [
+                            "your_domain.com"
+                        ],
+                        "issuers": [
+                            {
+                                "email": "yslao@outlook.com",
+                                "module": "acme"
+                            },
+                            {
+                                "email": "yslao@outlook.com",
+                                "module": "zerossl"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,21 @@
+version: '3'
+networks:
+  mynet:
+    external: true
+services:
+  sub:
+    image: tindy2013/subconverter:latest
+    restart: unless-stopped
+    container_name: subconverter
+    ports:
+      - 25500:25500
+    networks:
+      - mynet
+  sub-web:
+    image: careywong/subweb:latest
+    restart: unless-stopped
+    container_name: subweb
+    ports:
+      - 58080:80
+    networks:
+      - mynet

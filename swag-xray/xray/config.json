@@ -1,0 +1,111 @@
+{
+  "log": {
+    "loglevel": "warning",
+    "access": "/var/log/xray/access.log",
+    "error": "/var/log/xray/error.log"
+  },
+  "api": {
+    "services": [
+      "HandlerService",
+      "LoggerService",
+      "StatsService"
+    ],
+    "tag": "api"
+  },
+  "inbounds": [
+    {
+      "port": 443,
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "aabea2e8-baac-4311-e5ef-04a965f99d77",
+            "flow": "xtls-rprx-vision",
+            "level": 0,
+            "email": "kh@test.me"
+          }
+        ],
+        "decryption": "none",
+        "fallbacks": [
+          {
+            "dest": "swag:80",
+            "xver": 1
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "tls",
+        "tlsSettings": {
+          "rejectUnknownSni": true,
+          "certificates": [
+            {
+              "certificateFile": "/config/keys/letsencrypt/fullchain.pem",
+              "keyFile": "/config/keys/letsencrypt/privkey.pem"
+            }
+          ]
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls"
+        ]
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "IP4_out",
+      "protocol": "freedom",
+      "settings": {}
+    },
+    {
+      "tag": "IP6_out",
+      "protocol": "freedom",
+      "settings": {
+        "domainStrategy": "UseIPv6"
+      }
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "block"
+    }
+  ],
+  "routing": {
+    "rules": [
+      {
+        "type": "field",
+        "outboundTag": "IP4_out",
+        "domain": [
+          "geosite:netflix"
+        ]
+      },
+      {
+        "type": "field",
+        "outboundTag": "IP4_out",
+        "network": "udp,tcp"
+      },
+      {
+        "type": "field",
+        "ip": [
+            "geoip:cn",
+            "geoip:private"
+        ],
+        "outboundTag": "block"
+      }
+    ]
+  },
+  "policy": {
+    "statsInboundUplink": true,
+    "statsInboundDownlink": true,
+    "statsOutboundUplink": true,
+    "statsOutboundDownlink": true
+  },
+  "dns": null,
+  "transport": null,
+  "stats": {},
+  "reverse": null,
+  "fakeDns": null
+}

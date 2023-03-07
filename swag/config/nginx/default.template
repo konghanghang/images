@@ -1,0 +1,18 @@
+## Version 2021/04/27 - Changelog: https://github.com/linuxserver/docker-swag/commits/master/root/defaults/default
+
+error_page 502 /502.html;
+
+# redirect all traffic to https
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${DOMAIN};
+    root /config/www;
+    location / {
+        try_files $uri $uri/ /index.html ;
+    }
+}
+# enable subdomain method reverse proxy confs
+include /config/nginx/proxy-confs/*.subdomain.conf;
+# enable proxy cache for auth
+proxy_cache_path cache/ keys_zone=auth_cache:10m;

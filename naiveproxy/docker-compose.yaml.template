@@ -1,0 +1,22 @@
+version: '3'
+networks:
+  mynet:
+    external: true
+services:
+  naiveproxy:
+    image: pocat/naiveproxy:latest
+    restart: unless-stopped
+    container_name: naiveproxy
+    volumes:
+      - ./log:/var/log
+      - ./conf/Caddyfile:/etc/naiveproxy/Caddyfile
+      - ./conf/cert:/root/.local/share/caddy/certificates/acme-v02.api.letsencrypt.org-directory
+      - ./html:/html
+    networks:
+      - mynet
+    ports:
+      - ${NAVIE_HTTP_PORT}:${NAVIE_HTTP_PORT}
+      - ${NAVIE_HTTPS_PORT}:${NAVIE_HTTPS_PORT}
+    environment:
+      # PATH=/etc/naiveproxy/config.json
+      - PATH=/etc/naiveproxy/Caddyfile

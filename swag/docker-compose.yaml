@@ -1,0 +1,15 @@
+version: '3'
+networks:
+  mynet:
+    external: true
+services:
+  swag:
+    image: konghanghang/swag:1.27.0
+    restart: unless-stopped
+    container_name: swag0
+    entrypoint: /opt/entry.bash
+    volumes:
+      - ./config/nginx/entry.bash:/config/nginx/entry.bash:ro
+      - ./config/nginx/default.template:/config/nginx/default.template:ro
+    networks:
+      - mynet

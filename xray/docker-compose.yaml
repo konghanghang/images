@@ -1,0 +1,21 @@
+version: '3'
+networks:
+  mynet:
+    external: true
+services:
+  xray:
+    image: teddysun/xray:1.7.5
+    restart: unless-stopped
+    container_name: xray
+    environment:
+      # 自定义host
+      - XRAY_HOST=${XRAY_HOST}
+    ports:
+      - "13100-13103:13100-13103"
+    networks:
+      - mynet
+    volumes:
+      - ./log:/var/log/xray
+      - ./conf/config.json:/etc/xray/config.json
+      # 使用naiveproxy生成的证书
+      - ./../naiveproxy/conf/cert:/ssl

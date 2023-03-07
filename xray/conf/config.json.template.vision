@@ -1,0 +1,157 @@
+{
+    "log": {
+      "loglevel": "warning",
+      "access": "/var/log/xray/access.log",
+      "error": "/var/log/xray/error.log"
+    },
+    "api": {
+      "services": [
+        "HandlerService",
+        "LoggerService",
+        "StatsService"
+      ],
+      "tag": "api"
+    },
+    "inbounds": [
+        {
+          "listen": null,
+          "port": 13100,
+          "protocol": "vless",
+          "settings": {
+              "clients": [
+                  {
+                      "id": "c541c9fe-fa75-4b28-d839-497a28a41de0",
+                      "flow": "xtls-rprx-vision",
+                      "email": "vision@test.com"
+                  }
+              ],
+              "decryption": "none"
+          },
+          "streamSettings": {
+              "network": "tcp",
+              "security": "tls",
+              "tlsSettings": {
+                  "certificates": [
+                      {
+                          "certificateFile": "/ssl/${XRAY_SSL_HOST}/${XRAY_SSL_HOST}.crt",
+                          "keyFile": "/ssl/${XRAY_SSL_HOST}/${XRAY_SSL_HOST}.key"
+                      }
+                  ]
+              }
+          },
+          "sniffing": {
+              "enabled": true,
+              "destOverride": [
+                  "http",
+                  "tls"
+              ]
+          }
+      },
+      {
+        "listen": null,
+        "port": 13102,
+        "protocol": "vmess",
+        "settings": {
+          "clients": [
+            {
+              "id": "e0bea2e8-baac-4311-e5ef-04a965f99d47",
+              "level": 0,
+              "alterId": 4,
+              "email": "vmess@example.com"
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "ws",
+          "security": "none",
+          "wsSettings": {
+            "path": "/vmessws13102"
+          }
+        },
+        "sniffing": {
+          "enabled": true,
+          "destOverride": [
+            "http",
+            "tls"
+          ]
+        }
+      },
+      {
+        "listen": null,
+        "port": 13103,
+        "protocol": "shadowsocks",
+        "settings": {
+          "method": "chacha20-ietf-poly1305",
+          "password": "sspw14250"
+        },
+        "streamSettings": {
+          "network": "tcp"
+        }
+      }
+    ],
+    "outbounds": [
+      {
+        "tag":"common",
+        "protocol": "freedom"
+      },
+      {
+        "protocol": "shadowsocks",
+        "settings": {
+          "servers": [
+            {
+              "address": "1.1.1.1",
+              "port": 13103,
+              "method": "chacha20-ietf-poly1305",
+              "password": "sspw14250"
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp"
+        },
+        "tag": "netflix-disney"
+      },
+      {
+        "protocol": "blackhole",
+        "settings": {},
+        "tag": "blocked"
+      }
+    ],
+    "routing": {
+      "rules": [
+        {
+          "type": "field",
+          "outboundTag": "${XRAY_MEDIA_TAG}",
+          "domain": [
+            "geosite:netflix",
+            "geosite:disney"
+          ]
+        },
+        {
+          "type": "field",
+          "outboundTag": "common",
+          "network": "udp,tcp"
+        },
+        {
+          "type": "field",
+          "outboundTag": "blocked",
+          "ip": [
+              "geoip:cn",
+              "geoip:cn",
+              "geoip:private"
+          ]
+        }
+      ]
+    },
+    "policy": {
+      "statsInboundUplink": true,
+      "statsInboundDownlink": true,
+      "statsOutboundUplink": true,
+      "statsOutboundDownlink": true
+    },
+    "dns": null,
+    "transport": null,
+    "stats": null,
+    "reverse": null,
+    "fakeDns": null
+  }
