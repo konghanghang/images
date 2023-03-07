@@ -30,7 +30,7 @@ services:
     networks:
       - mynet
     depends_on:
-      - wordprfess
+      - wordpress
     ports:
       - "80:80"    # http
     volumes:
