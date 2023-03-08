@@ -14,6 +14,7 @@ services:
       - mynet
     volumes:
       - ${WORDPRESS_LOCAL_HOME}:/var/www/html
+      - ${WORDPRESS_UPLOADS_HOME}:/var/www/html/wp-content/uploads
       - ${WORDPRESS_UPLOADS_CONFIG}:/usr/local/etc/php/conf.d/uploads.ini
       # - /path/to/repo/myTheme/:/var/www/html/wp-content/themes/myTheme
     environment:
