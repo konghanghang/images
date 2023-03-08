@@ -1,0 +1,11 @@
+version: "3"
+services:
+  certbot:
+    image: certbot/dns-cloudflare:v2.4.0
+    container_name: certbot
+    env_file:
+      - .env
+    volumes:
+      - ./certs:/etc/letsencrypt
+      - ./conf/cloudflare.ini:/secrets/cloudflare.ini
+    command: certonly --dns-cloudflare --agree-tos --non-interactive --dns-cloudflare-credentials /secrets/cloudflare.ini --email ${CERTBOT_EMAIL} --dns-cloudflare-propagation-seconds 20 -d ${CERTBOT_DOMAIN}
