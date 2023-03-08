@@ -49,6 +49,22 @@
       },
       {
         "listen": null,
+        "port": 13101,
+        "protocol": "socks",
+        "sniffing": {
+          "enabled": true,
+          "destOverride": [
+            "http",
+            "tls"
+          ]
+        },
+        "settings": {
+          "auth": "noauth",
+          "udp": false
+        }
+      },
+      {
+        "listen": null,
         "port": 13102,
         "protocol": "vmess",
         "settings": {
