@@ -29,7 +29,7 @@ services:
     volumes:
       - ./config:/config
   xray:
-    image: teddysun/xray:1.7.5
+    image: teddysun/xray
     restart: unless-stopped
     container_name: xray
     ports:
