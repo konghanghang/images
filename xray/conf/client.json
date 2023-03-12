@@ -1,0 +1,31 @@
+{
+    "tag": "proxy",
+    "protocol": "vless",
+    "settings": {
+      "vnext": [
+        {
+          "address": "0.0.0.0",
+          "port": 443,
+          "users": [
+            {
+              "id": "0c41318a-32b6-4017-9938-4033bf26b676",
+              "encryption": "none",
+              "flow": "xtls-rprx-vision"
+            }
+          ]
+        }
+      ]
+    },
+    "streamSettings": {
+      "network": "tcp",
+      "security": "reality",
+      "sockopt": {
+        "mark": 2 
+      },
+      "realitySettings": {
+        "publicKey": "lkk1xFm7lxRRGkOAqs9Wqu-tKIMJqE7g3iozu00zVUM",
+        "serverName": "www.microsoft.com",
+        "fingerprint": "randomized"
+      }
+    }
+  }

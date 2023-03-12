@@ -1,0 +1,119 @@
+{
+    "log": {
+      "loglevel": "warning",
+      "access": "/var/log/xray/access.log",
+      "error": "/var/log/xray/error.log"
+    },
+    "api": {
+      "services": [
+        "HandlerService",
+        "LoggerService",
+        "StatsService"
+      ],
+      "tag": "api"
+    },
+    "inbounds": [
+      {
+            "listen": null,
+            "port": 13100,
+            "protocol": "vless",
+            "settings": {
+                "clients": [
+                    {
+                        "id": "0c41318a-32b6-4017-9938-4033bf26b676",
+                        "flow": "xtls-rprx-vision"
+                    }
+                ],
+                "decryption": "none"
+            },
+            "streamSettings": {
+                "network": "tcp",
+                "security": "reality",
+                "realitySettings": {
+                    "show": false,
+                    "dest": "www.microsoft.com:443",
+                    "xver": 0,
+                    "serverNames": [
+                        "www.microsoft.com"
+                    ],
+                    "privateKey": "uPPcl3v06d81DMdlojRB_ps78jrxNpT0wcG0ueOmD14",
+                    "shortIds": [
+                        "6ba85179e30d4fc2"
+                    ]
+                }
+            },
+            "sniffing": {
+                "enabled": true,
+                "destOverride": [
+                    "http",
+                    "tls"
+                ]
+            }
+        }
+    ],
+    "outbounds": [
+      {
+        "tag":"common",
+        "protocol": "freedom"
+      },
+      {
+        "protocol": "shadowsocks",
+        "settings": {
+          "servers": [
+            {
+              "address": "1.1.1.1",
+              "port": 13103,
+              "method": "chacha20-ietf-poly1305",
+              "password": "sspw14250"
+            }
+          ]
+        },
+        "streamSettings": {
+          "network": "tcp"
+        },
+        "tag": "netflix-disney"
+      },
+      {
+        "protocol": "blackhole",
+        "settings": {},
+        "tag": "blocked"
+      }
+    ],
+    "routing": {
+      "rules": [
+        {
+          "type": "field",
+          "outboundTag": "${XRAY_MEDIA_TAG}",
+          "domain": [
+            "geosite:netflix",
+            "geosite:disney"
+          ]
+        },
+        {
+          "type": "field",
+          "outboundTag": "common",
+          "network": "udp,tcp"
+        },
+        {
+          "type": "field",
+          "outboundTag": "blocked",
+          "ip": [
+              "geoip:cn",
+              "geoip:cn",
+              "geoip:private"
+          ]
+        }
+      ]
+    },
+    "policy": {
+      "statsInboundUplink": true,
+      "statsInboundDownlink": true,
+      "statsOutboundUplink": true,
+      "statsOutboundDownlink": true
+    },
+    "dns": null,
+    "transport": null,
+    "stats": null,
+    "reverse": null,
+    "fakeDns": null
+  }
