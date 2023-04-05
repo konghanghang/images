@@ -37,5 +37,5 @@ services:
     volumes:
       - ${WORDPRESS_LOCAL_HOME}:/var/www/html
       - ${WORDPRESS_UPLOADS_HOME}:/var/www/html/wp-content/uploads
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx:/etc/nginx/conf.d
       - ./logs:/var/log/nginx
