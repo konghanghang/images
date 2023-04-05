@@ -12,6 +12,7 @@ services:
       - XRAY_HOST=${XRAY_HOST}
     ports:
       - "13100-13103:13100-13103"
+      - 8443:8443
     networks:
       - mynet
     volumes:
