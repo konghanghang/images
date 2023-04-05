@@ -3,24 +3,13 @@ networks:
   mynet:
     external: true
 services:
-  sspanel:
-    image: sspaneluim/panel
-    container_name: sspanel
+  nodequery:
+    image: jaydenlee2019/mynodequery:latest
+    container_name: nodequery
     restart: unless-stopped
     ports:
-      - 13301:80
+      - 15000:5000
     networks:
       - mynet
     volumes:
-      - ./config/.config.php:/var/www/config/.config.php
-
-  phpmyadmin:
-    image: phpmyadmin
-    container_name: phpmyadmin
-    restart: unless-stopped
-    ports:
-      - 13302:80
-    networks:
-      - mynet
-    environment:
-      - PMA_ARBITRARY=1
+      - ./config/appsettings.json:/app/appsettings.json
