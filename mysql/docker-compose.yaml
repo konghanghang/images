@@ -7,6 +7,8 @@ services:
     image: mysql:8.0
     container_name: mysql
     restart: unless-stopped
+    env_file:
+      - .env
     ports:
       - 13336:3306
     networks:
@@ -19,6 +21,6 @@ services:
       - $PWD/data:/var/lib/mysql
       - $PWD/conf:/etc/mysql/conf.d/
     environment:
-      MYSQL_ROOT_PASSWORD: 2222
-      MYSQL_USER: yourname
-      MYSQL_PASSWORD: yourpassword
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
