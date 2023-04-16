@@ -94,6 +94,20 @@
         "tag": "netflix-disney"
       },
       {
+        "protocol": "wireguard",
+        "settings": {
+          "secretKey": "我的私钥",
+          "address": ["172.16.0.2/32", "2606:4700:110:8949:fed8:2642:a640:c8e1/128"],
+          "peers": [
+            {
+              "publicKey": "Warp公钥",
+              "endpoint": "engage.cloudflareclient.com:2408"
+            }
+          ]
+        },
+        "tag": "wireguard"
+      },
+      {
         "protocol": "blackhole",
         "settings": {},
         "tag": "blocked"
@@ -111,17 +125,23 @@
         },
         {
           "type": "field",
-          "outboundTag": "common",
-          "network": "udp,tcp"
+          "domain": [
+              "geosite:cn"
+          ],
+          "outboundTag": "wireguard"
+        },
+        {
+            "type": "field",
+            "ip": [
+                "geoip:cn",
+                "geoip:private"
+            ],
+            "outboundTag": "wireguard"
         },
         {
           "type": "field",
-          "outboundTag": "blocked",
-          "ip": [
-              "geoip:cn",
-              "geoip:cn",
-              "geoip:private"
-          ]
+          "outboundTag": "common",
+          "network": "udp,tcp"
         }
       ]
     },
