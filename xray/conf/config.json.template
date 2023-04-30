@@ -63,11 +63,27 @@
       "port": 13103,
       "protocol": "shadowsocks",
       "settings": {
-        "method": "chacha20-ietf-poly1305",
-        "password": "sspw14250"
+        "method": "chacha20-poly1305",
+        "password": "sspw14250",
+        "network": "tcp,udp"
       },
       "streamSettings": {
-        "network": "tcp"
+        "network": "tcp",
+        "security": "none",
+        "tcpSettings": {
+          "header": {
+            "type": "none"
+          },
+          "acceptProxyProtocol": false
+        }
+      },
+      "tag": "inbound-13103",
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls"
+        ]
       }
     }
   ],
