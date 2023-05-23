@@ -1,0 +1,23 @@
+version: '3'
+networks:
+  mynet:
+    external: true
+services:
+  mariadb:
+    image: mariadb:10.10
+    container_name: mariadb
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - 13316:3306
+    networks:
+      - mynet
+    volumes:
+      - $PWD/log:/var/log/mysql
+      - $PWD/data:/var/lib/mysql
+      - $PWD/conf:/etc/mysql/conf.d/
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
