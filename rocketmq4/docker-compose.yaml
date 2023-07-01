@@ -1,0 +1,55 @@
+version: '3.9'
+networks:
+  mynet:
+    external: true
+services:
+  rmqnamesrv:
+    image: rocketmqinc/rocketmq:4.9.4
+    container_name: rmqnamesrv
+    restart: unless-stopped
+    ports:
+      - 9876:9876
+    environment:
+      #内存分配
+      JAVA_OPT_EXT: "-server -Xms512m -Xmx512m"
+    volumes:
+      - ./logs:/root/logs
+    command: sh mqnamesrv
+    networks:
+      - mynet
+          
+  rmqbroker:
+    image: rocketmqinc/rocketmq:4.9.4
+    container_name: rmqbroker
+    restart: unless-stopped
+    depends_on:
+      - rmqnamesrv
+    ports:
+      - 10909:10909
+      - 10911:10911
+    volumes:
+      - ./logs:/root/logs
+      - ./store:/root/store
+      - ./conf/broker.conf:/opt/rocketmq-4.9.4/conf/broker.conf
+    command: sh mqbroker  -c /opt/rocketmq-4.9.4/conf/broker.conf
+    environment:
+      NAMESRV_ADDR: "rmqnamesrv:9876"
+      JAVA_OPT_EXT: "-server -Xms512m -Xmx512m -Xmn1g"
+    networks:
+      - mynet
+          
+  rmqconsole:
+    image: styletang/rocketmq-console-ng
+    container_name: rocketmq-console
+    restart: always
+    ports:
+      - 18081:8080
+    depends_on:
+      - rmqnamesrv
+    volumes:
+      # - /etc/localtime:/etc/localtime:ro
+      - ./logs:/root/logs
+    environment:
+      JAVA_OPTS: "-Drocketmq.namesrv.addr=rmqnamesrv:9876 -Dcom.rocketmq.sendMessageWithVIPChannel=false"
+    networks:
+      - mynet
