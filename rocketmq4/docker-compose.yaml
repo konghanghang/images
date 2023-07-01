@@ -4,7 +4,7 @@ networks:
     external: true
 services:
   rmqnamesrv:
-    image: rocketmqinc/rocketmq:4.9.4
+    image: apache/rocketmq:4.9.4
     container_name: rmqnamesrv
     restart: unless-stopped
     ports:
@@ -13,13 +13,13 @@ services:
       #内存分配
       JAVA_OPT_EXT: "-server -Xms512m -Xmx512m"
     volumes:
-      - ./logs:/root/logs
+      - ./logs:/home/rocketmq/logs
     command: sh mqnamesrv
     networks:
       - mynet
           
   rmqbroker:
-    image: rocketmqinc/rocketmq:4.9.4
+    image: apache/rocketmq:4.9.4
     container_name: rmqbroker
     restart: unless-stopped
     depends_on:
@@ -28,13 +28,13 @@ services:
       - 10909:10909
       - 10911:10911
     volumes:
-      - ./logs:/root/logs
-      - ./store:/root/store
-      - ./conf/broker.conf:/opt/rocketmq-4.9.4/conf/broker.conf
-    command: sh mqbroker  -c /opt/rocketmq-4.9.4/conf/broker.conf
+      - ./logs:/home/rocketmq/logs
+      - ./store:/home/rocketmq/store
+      - ./conf/broker.conf:/etc/rocketmq/broker.conf
+    command: sh mqbroker -c /etc/rocketmq/broker.conf
     environment:
       NAMESRV_ADDR: "rmqnamesrv:9876"
-      JAVA_OPT_EXT: "-server -Xms512m -Xmx512m -Xmn1g"
+      JAVA_OPT_EXT: "-server -Xms512m -Xmx512m -Xmn128m"
     networks:
       - mynet
           
@@ -43,7 +43,7 @@ services:
     container_name: rocketmq-console
     restart: always
     ports:
-      - 18081:8080
+      - 8180:8080
     depends_on:
       - rmqnamesrv
     volumes:
