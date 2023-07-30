@@ -9,4 +9,9 @@ services:
       - ./certs:/etc/letsencrypt
       - ./logs:/var/log/letsencrypt
       - ./conf/cloudflare.ini:/secrets/cloudflare.ini
-    command: certonly --dns-cloudflare --agree-tos --force-renewal --non-interactive --dns-cloudflare-credentials /secrets/cloudflare.ini --email ${CERTBOT_EMAIL} --dns-cloudflare-propagation-seconds 20 -d ${CERTBOT_DOMAIN}
+    # dry run
+    # command: certonly --dns-cloudflare --agree-tos --non-interactive --dns-cloudflare-credentials /secrets/cloudflare.ini --email ${CERTBOT_EMAIL} --dns-cloudflare-propagation-seconds 20 -d ${CERTBOT_DOMAIN} --dry-run
+    # issue --force-renewal
+    # command: certonly --dns-cloudflare --agree-tos --non-interactive --dns-cloudflare-credentials /secrets/cloudflare.ini --email ${CERTBOT_EMAIL} --dns-cloudflare-propagation-seconds 20 -d ${CERTBOT_DOMAIN}
+    # renew 
+    command: renew --dns-cloudflare --no-self-upgrade --agree-tos --non-interactive --dns-cloudflare-credentials /secrets/cloudflare.ini --dns-cloudflare-propagation-seconds 20
