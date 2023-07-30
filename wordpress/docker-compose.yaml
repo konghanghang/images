@@ -33,9 +33,11 @@ services:
     depends_on:
       - wordpress
     ports:
-      - "80:80"    # http
+      - 80:80    # http
+      - 8443:8443    # https
     volumes:
       - ${WORDPRESS_LOCAL_HOME}:/var/www/html
       - ${WORDPRESS_UPLOADS_HOME}:/var/www/html/wp-content/uploads
       - ./nginx:/etc/nginx/conf.d
       - ./logs:/var/log/nginx
+      - ${NGINX_SSL_PATH}/${NGINX_SSL_HOST}:/etc/ssl
