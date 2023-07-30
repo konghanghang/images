@@ -5,61 +5,27 @@ server {
 }
 
 server {
-# http2 on; 这条指令出现在1.25.1版本中 https://nginx.org/en/docs/http/ngx_http_v2_module.html
-#       listen                  127.0.0.1:8003 ssl proxy_protocol;
-#       http2                   on;
+    # http2 on; 这条指令出现在1.25.1版本中 https://nginx.org/en/docs/http/ngx_http_v2_module.html
+    #       listen                  127.0.0.1:8003 ssl proxy_protocol;
+    #       http2                   on;
 
-    listen                  nginx:8443 ssl http2 proxy_protocol;
-    server_name _;
+    listen                  443 ssl http2 proxy_protocol;
+    server_name             _;
 
-    set_real_ip_from        nginx;
+    set_real_ip_from        192.168.1.0/24;
+    set_real_ip_from        127.0.0.1;
     real_ip_header          proxy_protocol;
 
-    index index.php index.html index.htm;
-    root /var/www/html;
-    server_tokens off;
-    client_max_body_size 75M;
+    index                   index.php index.html index.htm;
+    root                    /var/www/html;
+    server_tokens           off;
+    client_max_body_size    75M;
 
-    # 设置Cloudflare IP地址范围
-    set_real_ip_from 103.21.244.0/22;
-    set_real_ip_from 103.22.200.0/22;
-    set_real_ip_from 103.31.4.0/22;
-    set_real_ip_from 104.16.0.0/12;
-    set_real_ip_from 108.162.192.0/18;
-    set_real_ip_from 131.0.72.0/22;
-    set_real_ip_from 141.101.64.0/18;
-    set_real_ip_from 162.158.0.0/15;
-    set_real_ip_from 172.64.0.0/13;
-    set_real_ip_from 173.245.48.0/20;
-    set_real_ip_from 188.114.96.0/20;
-    set_real_ip_from 190.93.240.0/20;
-    set_real_ip_from 197.234.240.0/22;
-    set_real_ip_from 198.41.128.0/17;
-    set_real_ip_from 199.27.128.0/21;
-    # set_real_ip_from 2400:cb00::/32;
-    # set_real_ip_from 2606:4700::/32;
-    # set_real_ip_from 2803:f800::/32;
-    # set_real_ip_from 2405:b500::/32;
-    # set_real_ip_from 2405:8100::/32;
-    # set_real_ip_from 2c0f:f248::/32;
-    # set_real_ip_from 2a06:98c0::/29;
+    access_log              /var/log/nginx/wordpress.access.log;
+    error_log               /var/log/nginx/wordpress.error.log;
 
-    access_log /var/log/nginx/wordpress.access.log;
-    error_log  /var/log/nginx/wordpress.error.log;
+    include ./ssl_params.conf;
 
-    ssl_certificate         /etc/letsencrypt/ssl/fullchain.pem; # 证书文件，通常不区分扩展名，证书文件需要使用fullchain（全SSL证书链）
-    ssl_certificate_key     /etc/letsencrypt/ssl/privkey.pem; # 私钥文件，通常不区分扩展名
-
-    ssl_protocols           TLSv1.2 TLSv1.3;
-    ssl_ciphers             TLS13_AES_128_GCM_SHA256:TLS13_AES_256_GCM_SHA384:TLS13_CHACHA20_POLY1305_SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305;
-
-    ssl_session_timeout     1d;
-    ssl_session_cache       shared:SSL:10m;
-    ssl_session_tickets     off;
-
-    ssl_stapling            on;
-    ssl_stapling_verify     on;
-    ssl_trusted_certificate /etc/letsencrypt/ssl/fullchain.pem;
     resolver                1.1.1.1 valid=60s;
     resolver_timeout        2s;
 
