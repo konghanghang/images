@@ -14,7 +14,8 @@ services:
       - mynet
     volumes:
       - ${WORDPRESS_LOCAL_HOME}:/var/www/html
-      - ${WORDPRESS_UPLOADS_HOME}:/var/www/html/wp-content/uploads
+      # 如果需要自定义上传的文件路径修改这里，同时需要修改nginx中的配置
+      #- ${WORDPRESS_UPLOADS_HOME}:/var/www/html/wp-content/uploads
       - ${WORDPRESS_UPLOADS_CONFIG}:/usr/local/etc/php/conf.d/uploads.ini
       # - /path/to/repo/myTheme/:/var/www/html/wp-content/themes/myTheme
     environment:
@@ -37,7 +38,9 @@ services:
       - 8443:8443    # https
     volumes:
       - ${WORDPRESS_LOCAL_HOME}:/var/www/html
-      - ${WORDPRESS_UPLOADS_HOME}:/var/www/html/wp-content/uploads
+      # 读取wordpress中文件的路径
+      #- ${WORDPRESS_UPLOADS_HOME}:/var/www/html/wp-content/uploads
       - ./nginx:/etc/nginx/conf.d
       - ./logs:/var/log/nginx
-      - ${NGINX_SSL_PATH}/${NGINX_SSL_HOST}:/etc/ssl
+      - ${NGINX_SSL_PATH}:/etc/letsencrypt
+      - ${NGINX_SSL_PATH}/live/${NGINX_SSL_HOST}:/etc/letsencrypt/ssl
