@@ -19,6 +19,7 @@ services:
       - ${WORDPRESS_UPLOADS_CONFIG}:/usr/local/etc/php/conf.d/uploads.ini
       # - /path/to/repo/myTheme/:/var/www/html/wp-content/themes/myTheme
     environment:
+      - TZ=Asia/Shanghai
       - WORDPRESS_DB_HOST=${WORDPRESS_DB_HOST}
       - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
       - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
@@ -35,7 +36,7 @@ services:
       - wordpress
     ports:
       - 80:80    # http
-      - 8443:8443    # https
+      #- 8443:8443    # https
     volumes:
       - ${WORDPRESS_LOCAL_HOME}:/var/www/html
       # 读取wordpress中文件的路径
@@ -43,4 +44,6 @@ services:
       - ./nginx:/etc/nginx/conf.d
       - ./logs:/var/log/nginx
       - ${NGINX_SSL_PATH}:/etc/letsencrypt
-      - ${NGINX_SSL_PATH}/live/${NGINX_SSL_HOST}:/etc/letsencrypt/ssl
+      - ${NGINX_SSL_PATH}/live/${NGINX_SSL_HOST}:/etc/letsencrypt/ssl/xx
+    environment:
+      - TZ=Asia/Shanghai
