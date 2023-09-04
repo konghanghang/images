@@ -61,3 +61,5 @@ docker run -d  \
 ```
 
 docker 每次启动都会去执行docker-compose.yaml中的`command`命令，所以如果对文件有更改，不要使用`command`。
+
+使用nginx的geo功能，geo的数据库下载地址：https://www.miyuru.lk/geoiplegacy
