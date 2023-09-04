@@ -8,9 +8,9 @@ services:
     restart: unless-stopped
     container_name: promtail
     volumes:
-      - ./promtail/logs:/var/logs
+      - ./logs:/var/logs
       - ./config:/etc/promtail/config
-      - /data/log:/logs
+      - ../wordpress/logs:/logs
     networks:
       - mynet
     command: -config.file=/etc/promtail/config/promtail-config.yaml

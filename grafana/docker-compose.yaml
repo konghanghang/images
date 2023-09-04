@@ -16,3 +16,4 @@ services:
       - 3000:3000
     environment:
       - TZ=Asia/Shanghai
+    user: "0"

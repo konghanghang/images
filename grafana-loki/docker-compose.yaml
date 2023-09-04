@@ -18,3 +18,4 @@ services:
     command: -config.file=/etc/loki/config/loki-config.yaml
     environment:
       - TZ=Asia/Shanghai
+    user: "0"
