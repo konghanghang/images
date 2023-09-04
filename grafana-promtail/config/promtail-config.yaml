@@ -14,59 +14,14 @@ scrape_configs:
     - targets:
         - localhost
       labels:
-        job: nginx-access-log
-        __path__: /logs/access.log
+        job: access-log
+        agent: promtail
+        host: appfelstrudel
+        __path__: /logs/*.access.log
     pipeline_stages:
-    - match:
-        selector: '{job="nginx-access-log"}'
-        stages:
-          - json:  # 日志为json格式 选择需要的字段
-              expressions:
-                remote_addr:
-                request_uri:
-                verb:
-                httpversion:
-                response:
-                body_bytes_sent:
-                referrer:
-                user_agent:
-                http_x_forwarded_for:
-                server_name:
-                request_time:
-                upstream_response_time:
-                upstream_addr:
-                realpath_root:
-                cookie:
-                nginx_version:
-                scheme:
-                time:
-                country_code:
-                city_code:
-          - labels:
-              remote_addr:
-              request_uri:
-              verb:
-              httpversion:
-              response:
-              body_bytes_sent:
-              referrer:
-              user_agent:
-              http_x_forwarded_for:
-              server_name:
-              request_time:
-              upstream_response_time:
-              upstream_addr:
-              realpath_root:
-              cookie:
-              nginx_version:
-              scheme:
-              time:
-              country_code:
-              city_code:
-          - timestamp:
-              format: '2006-01-02T15:04:05+08:00'
-              source:  time
-              location: Asia/Shanghai
+    - replace:
+          expression: '(?:[0-9]{1,3}\.){3}([0-9]{1,3})'
+          replace: '***'
 
   - job_name: nginx-error
     static_configs:
