@@ -29,7 +29,7 @@ scrape_configs:
           - localhost
         labels:
           job: nginx-error-log
-          __path__: /logs/error.log
+          __path__: /logs/*.error.log
     pipeline_stages:
       - match:
           selector: '{job="nginx-error-log"}'
