@@ -1,0 +1,18 @@
+version: '3'
+networks:
+  mynet:
+    external: true
+services:
+  promtail:
+    image: grafana/promtail:2.8.3
+    restart: unless-stopped
+    container_name: promtail
+    volumes:
+      - ./promtail/logs:/var/logs
+      - ./config:/etc/promtail/config
+      - /data/log:/logs
+    networks:
+      - mynet
+    command: -config.file=/etc/promtail/config/promtail-config.yaml
+    environment:
+      - TZ=Asia/Shanghai

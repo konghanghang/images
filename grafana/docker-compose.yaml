@@ -1,0 +1,18 @@
+version: '3'
+networks:
+  mynet:
+    external: true
+services:
+  grafana:
+    image: grafana/grafana:9.5.8
+    restart: unless-stopped
+    container_name: grafana
+    volumes:
+      - ./config/:/etc/grafana/
+      - ./data:/var/lib/grafana/
+    networks:
+      - mynet
+    ports:
+      - 3000:3000
+    environment:
+      - TZ=Asia/Shanghai

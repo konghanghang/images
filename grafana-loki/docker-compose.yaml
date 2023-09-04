@@ -1,0 +1,20 @@
+version: '3'
+networks:
+  mynet:
+    external: true
+services:
+  loki:
+    image: grafana/loki:2.8.3
+    restart: unless-stopped
+    container_name: loki
+    volumes:
+      - ./config:/etc/loki/config
+      - ./loki/index:/opt/loki/index
+      - ./loki/chunks:/opt/loki/chunks
+    networks:
+      - mynet
+    ports:
+      - 3100:3100
+    command: -config.file=/etc/loki/config/loki-config.yaml
+    environment:
+      - TZ=Asia/Shanghai
