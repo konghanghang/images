@@ -1,0 +1,19 @@
+version: '3'
+networks:
+  mynet:
+    external: true
+services:
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.24.0
+    restart: unless-stopped
+    container_name: blackbox-exporter
+    volumes:
+      - ./config/config.yml:/etc/blackbox_exporter/config.yml
+    command:
+      - '--config.file=/etc/blackbox_exporter/config.yml'
+    networks:
+      - mynet
+    ports:
+      - 9115:9115
+    environment:
+      - TZ=Asia/Shanghai
