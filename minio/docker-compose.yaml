@@ -1,5 +1,7 @@
 version: '3'
-
+networks:
+  mynet:
+    external: true
 services:
   minio:
     image: quay.io/minio/minio
@@ -13,3 +15,5 @@ services:
     volumes:
       - ./data:/data
     command: server /data --console-address ":9001"
+    networks:
+      - mynet
