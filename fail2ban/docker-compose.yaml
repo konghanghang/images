@@ -1,0 +1,30 @@
+version: "3"
+services:
+  fail2ban:
+    image: crazymax/fail2ban:latest
+    container_name: fail2ban
+    restart: unless-stopped
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    # 使用同级目录下的环境变量文件件代替下面environment
+    env_file:
+      - .env
+#    environment:
+#      - TZ=Asia/Shanghai
+#      - F2B_LOG_TARGET=STDOUT
+#      - F2B_LOG_LEVEL=INFO
+#      - F2B_DB_PURGE_AGE=1d
+    volumes:
+      - ./data:/data
+      - ./logs/:/var/log/
+      # sshd 日志映射
+      - /var/log:/var/logs/sshd:ro
+      # nginx 日志映射
+      - ../wordpress/logs:/var/logs/nginx/:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "10"

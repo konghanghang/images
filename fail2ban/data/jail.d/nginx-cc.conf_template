@@ -1,0 +1,8 @@
+[nginx-cc]
+enabled = true
+filter = nginx-cc
+action = iptables-multiport[name=nginx-cc, port="http,https", protocol=tcp]
+logpath = /var/logs/nginx/access.log
+maxretry = 3
+bantime = 3600
+findtime = 600
