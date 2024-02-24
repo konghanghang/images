@@ -1,0 +1,21 @@
+version: '3.9'
+networks:
+  mynet:
+    external: true
+services:
+  xiaoya:
+    image: xiaoyaliu/alist:latest
+    container_name: xiaoya
+    env_file:
+      - .env
+    restart: unless-stopped
+    ports:
+      - 15678:80
+      - 12345:2345
+      - 12346:2346
+    networks:
+      - mynet
+    volumes:
+      - ./data:/data
+    environment:
+      - TZ=Asia/Shanghai
