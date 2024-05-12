@@ -14,8 +14,8 @@ services:
       - ./geo/GeoCity.dat:/etc/nginx/GeoCity.dat
       - ./html:/usr/share/nginx/html
       - ./logs:/var/log/nginx
-      - ./../naiveproxy/conf/cert:/ssl
-      - ./../wordpress/html:/wordpress
+      - ${NGINX_SSL_PATH}:/etc/letsencrypt
+      - ${NGINX_SSL_PATH}/live/${NGINX_SSL_HOST}:/etc/letsencrypt/ssl/xx
     networks:
       - mynet
     ports:

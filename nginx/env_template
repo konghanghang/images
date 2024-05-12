@@ -1,0 +1,2 @@
+export NGINX_SSL_PATH=/root/images/certbot/certs
+export NGINX_SSL_HOST=baidu.com
