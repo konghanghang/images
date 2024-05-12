@@ -1,0 +1,25 @@
+version: '3.9'
+networks:
+  mynet:
+    external: true
+services:
+  wordpress:
+    # default port 9000 (FastCGI)
+    image: wordpress:6.1.0-fpm
+    container_name: wordpress
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - mynet
+    volumes:
+      - ./html:/var/www/html
+      - ./logs:/var/log
+      - ./conf/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+      - ./conf/www.conf:/usr/local/etc/php-fpm.d/www.conf
+    environment:
+      - TZ=Asia/Shanghai
+      - WORDPRESS_DB_HOST=${WORDPRESS_DB_HOST}
+      - WORDPRESS_DB_NAME=${WORDPRESS_DB_NAME}
+      - WORDPRESS_DB_USER=${WORDPRESS_DB_USER}
+      - WORDPRESS_DB_PASSWORD=${WORDPRESS_DB_PASSWORD}
