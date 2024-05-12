@@ -3,10 +3,10 @@ networks:
   mynet:
     external: true
 services:
-  wordpress:
+  wp:
     # default port 9000 (FastCGI)
     image: wordpress:6.1.0-fpm
-    container_name: wordpress
+    container_name: wp
     env_file:
       - .env
     restart: unless-stopped
