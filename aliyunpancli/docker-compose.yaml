@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
     volumes:
       # （必须）映射的本地目录
-      - /data/webdav:/home/app/data:rw
+      - /data/webdav/data:/home/app/data:rw
       # （可选）可以指定JS插件sync_handler.js用于过滤文件，详见插件说明
       #- ./config/sync_handler.js:/home/app/config/plugin/js/sync_handler.js
       - ./js:/home/app/config/plugin/js/
