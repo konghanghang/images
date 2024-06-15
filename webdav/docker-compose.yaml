@@ -1,0 +1,24 @@
+version: '3'
+networks:
+  mynet:
+    external: true
+services:
+  webdav:
+    image: bytemark/webdav
+    restart: unless-stopped
+    container_name: webdav
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+    environment:
+      AUTH_TYPE: Digest
+      USERNAME: ${USERNAME}
+      PASSWORD: ${PASSWORD}
+      TZ: Asia/Shanghai
+    volumes:
+      - /data/webdav:/var/lib/dav
+    networks:
+      - mynet
+    extra_hosts:
+      - host.docker.internal:host-gateway
