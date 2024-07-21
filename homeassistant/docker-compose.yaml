@@ -1,0 +1,18 @@
+version: '3.9'
+networks:
+  mynet:
+    external: true
+services:
+  xiaoya:
+    image: homeassistant/home-assistant:stable
+    container_name: homeassistant
+    restart: unless-stopped
+    ports:
+      - 8123:8213
+    networks:
+      - mynet
+    volumes:
+      - ./config:/config
+    environment:
+      - TZ=Asia/Shanghai
+      
