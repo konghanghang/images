@@ -3,7 +3,7 @@ networks:
   mynet:
     external: true
 services:
-  xiaoya:
+  homeassistant:
     image: homeassistant/home-assistant:stable
     container_name: homeassistant
     restart: unless-stopped
