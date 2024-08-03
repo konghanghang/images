@@ -1,0 +1,10 @@
+qm importdisk 101 /var/lib/vz/template/iso/bleachwrt-plus-20231217-x86-64-generic-squashfs-combined-efi.img local-lvm
+
+
+docker compose -f ./image/rocketmq4/docker-compose.yaml stop
+
+GRANT UPDATE ON nodequery.bd_node_requests_collect TO 'nodequery'@'192.168.%.%';
+
+CREATE USER 'nodequery'@'192.168.0.5' IDENTIFIED BY 'nodequery';
+
+GRANT ALL PRIVILEGES ON nodequery.* TO 'nodequery'@'192.168.0.5';
