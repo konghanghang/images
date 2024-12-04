@@ -3,8 +3,27 @@
 
 ## 创建网络
 所有的镜像都跑在mynet网络下，所以在使用前先创建网络：
+`--gateway`可以不用指定，默认拿该网段的第一个地址。
+### ipv4
 ```shell
-docker network create --driver bridge --subnet 192.168.0.0/16 --gateway 192.168.0.1 mynet
+docker network create --driver bridge --subnet 192.168.6.0/24 --gateway 192.168.6.1 mynet
+```
+### ipv6
+需要先开启docker的ipv6支持。编辑/etc/docker/daemon.json修改为以下内容：
+```json
+{
+  "ipv6": true,
+  "fixed-cidr-v6": "fd00:d1::/64",
+  "experimental": true
+}
+```
+修改后需要对docker进行重启。然后再创建自己的桥接网络。daemon.json中配置的ipv6子网段不要和新建的桥接网络子网段重复，比如daemon.json中的为`fd00:d1::/64`，下边新的桥接网络中为`fd00:dd::/64`。
+```shell
+docker network create --driver bridge --subnet fd00:dd::/64 --gateway fd00:dd::1 mynet
+```
+### ipv4&ipv6
+```shell
+docker network create --driver=bridge --subnet=192.168.6.0/24  --subnet=fd00:dd::/64 --ipv6 mynet
 ```
 
 ## nginx-ray
