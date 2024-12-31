@@ -1,19 +1,15 @@
-version: '3'
 networks:
   mynet:
     external: true
 services:
   nginx:
-    image: nginx:1.22.0
+    image: nginx:1.26
     restart: unless-stopped
     container_name: nginx
     volumes:
-      - ./conf/nginx.conf:/etc/nginx/nginx.conf
-      - ./conf/conf.d:/etc/nginx/conf.d
-      - ./geo/GeoCountry.dat:/etc/nginx/GeoCountry.dat
-      - ./geo/GeoCity.dat:/etc/nginx/GeoCity.dat
-      - ./html:/usr/share/nginx/html
+      - ./conf:/etc/nginx/
       - ./logs:/var/log/nginx
+      - ./html:/usr/share/nginx/html
       - ${NGINX_SSL_PATH}:/etc/letsencrypt
       - ${NGINX_SSL_PATH}/live/${NGINX_SSL_HOST}:/etc/letsencrypt/ssl/xx
     networks:
