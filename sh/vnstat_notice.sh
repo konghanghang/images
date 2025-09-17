@@ -262,9 +262,85 @@ ${tip}"
     fi
 }
 
-# 确保依赖
-if ! command -v bc &> /dev/null; then
-    sudo apt-get update && sudo apt-get install -y bc
-fi
+# 检查和安装依赖
+check_dependencies() {
+    local missing_deps=()
+    local install_cmd=""
+
+    # 检查bc命令
+    if ! command -v bc &> /dev/null; then
+        missing_deps+=("bc")
+    fi
+
+    if [ ${#missing_deps[@]} -gt 0 ]; then
+        echo "⚠️ 检测到缺少依赖: ${missing_deps[*]}"
+
+        # 检测系统类型并确定安装命令
+        if [ -f /etc/os-release ]; then
+            source /etc/os-release
+            case $ID in
+                ubuntu|debian)
+                    install_cmd="apt-get update && apt-get install -y ${missing_deps[*]}"
+                    ;;
+                centos|rhel|rocky|almalinux)
+                    if command -v dnf &> /dev/null; then
+                        install_cmd="dnf install -y ${missing_deps[*]}"
+                    else
+                        install_cmd="yum install -y ${missing_deps[*]}"
+                    fi
+                    ;;
+                *)
+                    echo "❌ 不支持的系统类型: $ID"
+                    echo "请手动安装: ${missing_deps[*]}"
+                    exit 1
+                    ;;
+            esac
+        fi
+
+        echo "🔧 尝试安装依赖..."
+
+        # 检查是否有root权限
+        if [ "$EUID" -eq 0 ]; then
+            echo "🔧 使用root权限安装依赖..."
+            if eval "$install_cmd"; then
+                echo "✅ 依赖安装成功"
+            else
+                echo "❌ 依赖安装失败"
+                echo "请检查网络连接或软件源配置"
+                echo "手动执行: $install_cmd"
+                exit 1
+            fi
+        elif command -v sudo &> /dev/null; then
+            echo "🔧 使用sudo安装依赖..."
+            if eval "sudo $install_cmd"; then
+                echo "✅ 依赖安装成功"
+            else
+                echo "❌ sudo安装失败"
+                echo "请手动执行: sudo $install_cmd"
+                exit 1
+            fi
+        else
+            echo "❌ 需要管理员权限安装依赖"
+            echo "请以root身份运行此脚本，或手动安装依赖:"
+            echo "  $install_cmd"
+            echo ""
+            echo "或者手动安装bc命令:"
+            echo "  Ubuntu/Debian: apt-get install bc"
+            echo "  CentOS/RHEL: yum install bc"
+            exit 1
+        fi
+
+        # 重新检查
+        for dep in "${missing_deps[@]}"; do
+            if ! command -v "$dep" &> /dev/null; then
+                echo "❌ $dep 仍然不可用，请检查安装"
+                exit 1
+            fi
+        done
+    fi
+}
+
+# 检查依赖
+check_dependencies
 
 main "$@"
