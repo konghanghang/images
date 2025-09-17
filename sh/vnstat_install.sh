@@ -59,44 +59,90 @@ detect_system() {
     log_info "检测到系统: $OS $VER"
 }
 
-# 安装vnstat
+# 检查和安装vnstat
 install_vnstat() {
-    log_info "开始安装vnstat..."
+    log_info "检查vnstat安装状态..."
 
-    case $OS in
-        ubuntu|debian)
-            apt-get update
-            apt-get install -y vnstat bc curl
-            ;;
-        centos|rhel|rocky|almalinux)
-            if command -v dnf &> /dev/null; then
-                dnf install -y epel-release
-                dnf install -y vnstat bc curl
+    # 检查vnstat是否已安装
+    if command -v vnstat &> /dev/null; then
+        log_info "发现vnstat已安装，检查运行状态..."
+
+        # 检查服务状态
+        if systemctl is-active --quiet vnstat; then
+            log_success "vnstat已安装且运行正常"
+
+            # 检查是否有数据库文件
+            if [ -d "/var/lib/vnstat" ] && [ "$(ls -A /var/lib/vnstat 2>/dev/null)" ]; then
+                log_success "vnstat数据库已初始化"
             else
-                yum install -y epel-release
-                yum install -y vnstat bc curl
+                log_warning "vnstat数据库未初始化，等待数据收集..."
             fi
-            ;;
-        *)
-            log_error "不支持的系统类型: $OS"
-            exit 1
-            ;;
-    esac
-
-    # 启动vnstat服务
-    systemctl enable vnstat
-    systemctl start vnstat
-
-    # 等待vnstat初始化
-    log_info "等待vnstat初始化网络接口..."
-    sleep 5
-
-    # 检查vnstat状态
-    if systemctl is-active --quiet vnstat; then
-        log_success "vnstat安装并启动成功"
+            return 0
+        else
+            log_warning "vnstat已安装但未运行，尝试启动..."
+            if systemctl enable vnstat && systemctl start vnstat; then
+                log_success "vnstat服务启动成功"
+                return 0
+            else
+                log_error "vnstat服务启动失败"
+            fi
+        fi
     else
-        log_error "vnstat启动失败"
-        exit 1
+        log_info "vnstat未安装，开始安装..."
+
+        # 安装必要的依赖包
+        case $OS in
+            ubuntu|debian)
+                apt-get update
+                apt-get install -y vnstat bc curl
+                ;;
+            centos|rhel|rocky|almalinux)
+                if command -v dnf &> /dev/null; then
+                    dnf install -y epel-release
+                    dnf install -y vnstat bc curl
+                else
+                    yum install -y epel-release
+                    yum install -y vnstat bc curl
+                fi
+                ;;
+            *)
+                log_error "不支持的系统类型: $OS"
+                exit 1
+                ;;
+        esac
+
+        # 启动vnstat服务
+        if systemctl enable vnstat && systemctl start vnstat; then
+            log_success "vnstat安装并启动成功"
+
+            # 等待vnstat初始化
+            log_info "等待vnstat初始化网络接口..."
+            sleep 5
+
+            # 检查服务状态
+            if systemctl is-active --quiet vnstat; then
+                log_success "vnstat服务运行正常"
+            else
+                log_error "vnstat服务状态异常"
+                systemctl status vnstat
+                exit 1
+            fi
+        else
+            log_error "vnstat启动失败"
+            exit 1
+        fi
+    fi
+
+    # 显示vnstat状态信息
+    log_info "当前vnstat状态:"
+    vnstat --version 2>/dev/null || log_warning "无法获取vnstat版本信息"
+
+    # 检查监控的网络接口
+    local interfaces=$(vnstat --iflist 2>/dev/null | grep -E "Available interfaces|可用接口" -A 10 | grep -v "Available\|可用" | head -5)
+    if [ -n "$interfaces" ]; then
+        log_info "监控的网络接口: $interfaces"
+    else
+        log_warning "暂无可用的网络接口数据"
     fi
 }
 
@@ -191,19 +237,64 @@ setup_crontab() {
             ;;
     esac
 
-    # 添加定时任务
-    CRON_COMMAND="$CRON_SCHEDULE root $INSTALL_DIR/$SCRIPT_NAME >> $LOG_DIR/cron.log 2>&1"
+    echo
+    echo -e "${YELLOW}请选择定时任务类型:${NC}"
+    echo "1) 系统级定时任务 (/etc/crontab) - 推荐"
+    echo "2) Root用户定时任务 (root crontab)"
 
-    # 检查是否已存在
-    if ! grep -q "$SCRIPT_NAME" /etc/crontab; then
-        echo "$CRON_COMMAND" >> /etc/crontab
-        log_success "定时任务添加成功: $CRON_SCHEDULE"
+    read -p "请选择 (1-2，默认1): " cron_type
+    cron_type=${cron_type:-1}
+
+    if [ "$cron_type" = "2" ]; then
+        # Root用户crontab
+        CRON_COMMAND="$CRON_SCHEDULE $INSTALL_DIR/$SCRIPT_NAME >> $LOG_DIR/cron.log 2>&1"
+
+        # 检查root用户crontab是否已存在该任务
+        if ! crontab -l 2>/dev/null | grep -q "$SCRIPT_NAME"; then
+            # 备份现有crontab
+            crontab -l 2>/dev/null > /tmp/current_crontab || echo "" > /tmp/current_crontab
+
+            # 添加新任务
+            echo "$CRON_COMMAND" >> /tmp/current_crontab
+
+            # 安装新的crontab
+            crontab /tmp/current_crontab
+
+            # 清理临时文件
+            rm -f /tmp/current_crontab
+
+            log_success "定时任务添加到root用户crontab: $CRON_SCHEDULE"
+            log_info "可使用 'crontab -l' 查看"
+        else
+            log_warning "root用户crontab中已存在该任务，跳过添加"
+        fi
     else
-        log_warning "定时任务已存在，跳过添加"
+        # 系统级crontab
+        CRON_COMMAND="$CRON_SCHEDULE root $INSTALL_DIR/$SCRIPT_NAME >> $LOG_DIR/cron.log 2>&1"
+
+        # 检查系统crontab是否已存在该任务
+        if ! grep -q "$SCRIPT_NAME" /etc/crontab 2>/dev/null; then
+            echo "$CRON_COMMAND" >> /etc/crontab
+            log_success "定时任务添加到系统crontab: $CRON_SCHEDULE"
+            log_info "可查看 /etc/crontab 文件"
+        else
+            log_warning "系统crontab中已存在该任务，跳过添加"
+        fi
     fi
 
     # 重启cron服务
     systemctl restart cron 2>/dev/null || systemctl restart crond 2>/dev/null || true
+
+    # 显示当前定时任务状态
+    echo
+    log_info "当前定时任务状态："
+    if [ "$cron_type" = "2" ]; then
+        echo "Root用户定时任务:"
+        crontab -l 2>/dev/null | grep "$SCRIPT_NAME" || log_warning "未找到相关任务"
+    else
+        echo "系统级定时任务:"
+        grep "$SCRIPT_NAME" /etc/crontab 2>/dev/null || log_warning "未找到相关任务"
+    fi
 }
 
 # 测试脚本
@@ -233,7 +324,9 @@ show_info() {
     echo -e "${YELLOW}常用命令:${NC}"
     echo "  手动运行: $INSTALL_DIR/$SCRIPT_NAME"
     echo "  查看日志: tail -f $LOG_DIR/telegram_success.log"
-    echo "  查看定时任务: crontab -l"
+    echo "  查看执行日志: tail -f $LOG_DIR/cron.log"
+    echo "  查看系统定时任务: cat /etc/crontab | grep vnstat"
+    echo "  查看用户定时任务: crontab -l"
     echo "  vnstat状态: systemctl status vnstat"
     echo
     echo -e "${YELLOW}注意事项:${NC}"
