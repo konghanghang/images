@@ -15,7 +15,9 @@ NC='\033[0m' # No Color
 
 # 脚本配置
 SCRIPT_NAME="vnstat_notice.sh"
+MONITOR_SCRIPT_NAME="traffic_monitor.sh"
 SCRIPT_URL="https://raw.githubusercontent.com/konghanghang/images/refs/heads/master/sh/vnstat_notice.sh"
+MONITOR_SCRIPT_URL="https://raw.githubusercontent.com/konghanghang/images/refs/heads/master/sh/traffic_monitor.sh"
 INSTALL_DIR="/opt/traffic_monitor"
 LOG_DIR="/var/log/traffic_monitor"
 
@@ -94,15 +96,15 @@ install_vnstat() {
         case $OS in
             ubuntu|debian)
                 apt-get update
-                apt-get install -y vnstat bc curl
+                apt-get install -y vnstat bc curl jq
                 ;;
             centos|rhel|rocky|almalinux)
                 if command -v dnf &> /dev/null; then
                     dnf install -y epel-release
-                    dnf install -y vnstat bc curl
+                    dnf install -y vnstat bc curl jq
                 else
                     yum install -y epel-release
-                    yum install -y vnstat bc curl
+                    yum install -y vnstat bc curl jq
                 fi
                 ;;
             *)
@@ -160,21 +162,40 @@ create_directories() {
 download_script() {
     log_info "下载流量监控脚本..."
 
-    # 如果是本地文件，直接复制
+    # 下载vnstat通知脚本
     if [[ -f "./sh/$SCRIPT_NAME" ]]; then
-        log_info "使用本地脚本文件"
+        log_info "使用本地vnstat通知脚本"
         cp "./sh/$SCRIPT_NAME" "$INSTALL_DIR/$SCRIPT_NAME"
     else
-        # 从GitHub下载
-        log_info "从GitHub下载脚本: $SCRIPT_URL"
+        log_info "从GitHub下载vnstat通知脚本: $SCRIPT_URL"
         if ! curl -fsSL "$SCRIPT_URL" -o "$INSTALL_DIR/$SCRIPT_NAME"; then
-            log_error "脚本下载失败"
+            log_error "vnstat通知脚本下载失败"
             log_info "请检查URL是否正确或网络连接"
             exit 1
         fi
     fi
-
     chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
+
+    # 询问是否需要实时流量监控
+    echo
+    read -p "是否需要实时流量异常监控功能? [y/N]: " install_monitor
+    if [[ $install_monitor =~ ^[Yy]$ ]]; then
+        if [[ -f "./sh/$MONITOR_SCRIPT_NAME" ]]; then
+            log_info "使用本地实时监控脚本"
+            cp "./sh/$MONITOR_SCRIPT_NAME" "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"
+        else
+            log_info "从GitHub下载实时监控脚本: $MONITOR_SCRIPT_URL"
+            if ! curl -fsSL "$MONITOR_SCRIPT_URL" -o "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"; then
+                log_warning "实时监控脚本下载失败，跳过此功能"
+            fi
+        fi
+
+        if [[ -f "$INSTALL_DIR/$MONITOR_SCRIPT_NAME" ]]; then
+            chmod +x "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"
+            log_success "实时监控脚本安装完成"
+        fi
+    fi
+
     log_success "脚本下载完成"
 }
 
@@ -202,7 +223,92 @@ configure_script() {
     sed -i "s/SERVER_NAME=\".*\"/SERVER_NAME=\"$SERVER_NAME\"/" "$INSTALL_DIR/$SCRIPT_NAME"
     sed -i "s/MONTHLY_QUOTA=.*/MONTHLY_QUOTA=$MONTHLY_QUOTA/" "$INSTALL_DIR/$SCRIPT_NAME"
 
-    log_success "脚本配置完成"
+    log_success "vnstat通知脚本配置完成"
+
+    # 如果安装了实时监控脚本，进行配置
+    if [[ -f "$INSTALL_DIR/$MONITOR_SCRIPT_NAME" ]]; then
+        configure_traffic_monitor_in_complete
+    fi
+}
+
+# 配置流量统计通知（独立安装时使用）
+configure_traffic_report() {
+    log_info "配置流量统计通知参数..."
+
+    echo
+    echo -e "${YELLOW}请输入以下配置信息:${NC}"
+
+    # Telegram配置
+    read -p "请输入Telegram Bot Token: " BOT_TOKEN
+    read -p "请输入Telegram Chat ID: " CHAT_ID
+
+    # 服务器配置
+    read -p "请输入服务器名称 (默认: 服务器): " SERVER_NAME
+    SERVER_NAME=${SERVER_NAME:-"服务器"}
+
+    read -p "请输入月流量配额(GB) (默认: 200): " MONTHLY_QUOTA
+    MONTHLY_QUOTA=${MONTHLY_QUOTA:-200}
+
+    # 更新脚本配置
+    sed -i "s/BOT_TOKEN=\"\"/BOT_TOKEN=\"$BOT_TOKEN\"/" "$INSTALL_DIR/$SCRIPT_NAME"
+    sed -i "s/CHAT_ID=\"\"/CHAT_ID=\"$CHAT_ID\"/" "$INSTALL_DIR/$SCRIPT_NAME"
+    sed -i "s/SERVER_NAME=\".*\"/SERVER_NAME=\"$SERVER_NAME\"/" "$INSTALL_DIR/$SCRIPT_NAME"
+    sed -i "s/MONTHLY_QUOTA=.*/MONTHLY_QUOTA=$MONTHLY_QUOTA/" "$INSTALL_DIR/$SCRIPT_NAME"
+
+    log_success "流量统计通知配置完成"
+}
+
+# 配置实时流量监控（独立安装时使用）
+configure_traffic_monitor() {
+    log_info "配置实时流量监控参数..."
+
+    echo
+    echo -e "${YELLOW}请输入以下配置信息:${NC}"
+
+    # 监控参数
+    read -p "流量异常告警阈值(MB/5分钟) (默认: 100): " alert_threshold
+    alert_threshold=${alert_threshold:-100}
+
+    read -p "突发流量阈值(MB/5分钟) (默认: 500): " burst_threshold
+    burst_threshold=${burst_threshold:-500}
+
+    # Telegram配置
+    read -p "是否启用Telegram告警? [y/N]: " enable_tg
+    if [[ $enable_tg =~ ^[Yy]$ ]]; then
+        read -p "Telegram Bot Token: " BOT_TOKEN
+        read -p "Telegram Chat ID: " CHAT_ID
+
+        sed -i "s/BOT_TOKEN=\"\"/BOT_TOKEN=\"$BOT_TOKEN\"/" "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"
+        sed -i "s/CHAT_ID=\"\"/CHAT_ID=\"$CHAT_ID\"/" "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"
+        sed -i "s/ENABLE_TELEGRAM=false/ENABLE_TELEGRAM=true/" "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"
+    fi
+
+    # 更新阈值配置
+    sed -i "s/ALERT_THRESHOLD_MB=100/ALERT_THRESHOLD_MB=$alert_threshold/" "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"
+    sed -i "s/BURST_THRESHOLD_MB=500/BURST_THRESHOLD_MB=$burst_threshold/" "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"
+
+    log_success "实时流量监控配置完成"
+}
+
+# 在完整安装中配置实时监控（复用已有Telegram配置）
+configure_traffic_monitor_in_complete() {
+    echo
+    log_info "配置实时流量监控..."
+
+    read -p "流量异常告警阈值(MB/5分钟) (默认: 100): " alert_threshold
+    alert_threshold=${alert_threshold:-100}
+
+    read -p "是否启用实时监控的Telegram告警? [y/N]: " enable_realtime_tg
+    if [[ $enable_realtime_tg =~ ^[Yy]$ ]]; then
+        # 使用已配置的Telegram信息
+        sed -i "s/BOT_TOKEN=\"\"/BOT_TOKEN=\"$BOT_TOKEN\"/" "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"
+        sed -i "s/CHAT_ID=\"\"/CHAT_ID=\"$CHAT_ID\"/" "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"
+        sed -i "s/ENABLE_TELEGRAM=false/ENABLE_TELEGRAM=true/" "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"
+    fi
+
+    sed -i "s/ALERT_THRESHOLD_MB=100/ALERT_THRESHOLD_MB=$alert_threshold/" "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"
+
+    log_success "实时监控脚本配置完成"
 }
 
 # 添加定时任务
@@ -295,6 +401,100 @@ setup_crontab() {
         echo "系统级定时任务:"
         grep "$SCRIPT_NAME" /etc/crontab 2>/dev/null || log_warning "未找到相关任务"
     fi
+
+    # 设置实时监控后台服务
+    if [[ -f "$INSTALL_DIR/$MONITOR_SCRIPT_NAME" ]]; then
+        echo
+        read -p "是否启动实时流量监控后台服务? [y/N]: " start_monitor
+        if [[ $start_monitor =~ ^[Yy]$ ]]; then
+            setup_monitor_service
+        else
+            log_info "可以稍后手动启动: $INSTALL_DIR/$MONITOR_SCRIPT_NAME start &"
+        fi
+    fi
+}
+
+# 为流量统计通知设置定时任务
+setup_report_crontab() {
+    log_info "配置流量统计通知定时任务..."
+
+    echo
+    echo -e "${YELLOW}请选择执行频率:${NC}"
+    echo "1) 每天 09:00 执行"
+    echo "2) 每天 09:00 和 21:00 执行"
+    echo "3) 每6小时执行一次"
+    echo "4) 自定义时间"
+
+    read -p "请选择 (1-4): " choice
+
+    case $choice in
+        1)
+            CRON_SCHEDULE="0 9 * * *"
+            ;;
+        2)
+            CRON_SCHEDULE="0 9,21 * * *"
+            ;;
+        3)
+            CRON_SCHEDULE="0 */6 * * *"
+            ;;
+        4)
+            read -p "请输入cron表达式 (如: 0 9 * * *): " CRON_SCHEDULE
+            ;;
+        *)
+            log_warning "无效选择，使用默认设置: 每天09:00执行"
+            CRON_SCHEDULE="0 9 * * *"
+            ;;
+    esac
+
+    # 添加到系统crontab
+    CRON_COMMAND="$CRON_SCHEDULE root $INSTALL_DIR/$SCRIPT_NAME >> $LOG_DIR/cron.log 2>&1"
+
+    if ! grep -q "$SCRIPT_NAME" /etc/crontab 2>/dev/null; then
+        echo "$CRON_COMMAND" >> /etc/crontab
+        log_success "定时任务添加成功: $CRON_SCHEDULE"
+    else
+        log_warning "定时任务已存在"
+    fi
+
+    systemctl restart cron 2>/dev/null || systemctl restart crond 2>/dev/null || true
+}
+
+# 设置实时监控服务
+setup_monitor_service() {
+    log_info "设置实时流量监控后台服务..."
+
+    # 创建systemd服务文件
+    cat > "/etc/systemd/system/traffic-monitor.service" << EOF
+[Unit]
+Description=Real-time Traffic Monitor
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=$INSTALL_DIR
+ExecStart=$INSTALL_DIR/$MONITOR_SCRIPT_NAME start
+Restart=always
+RestartSec=10
+StandardOutput=append:$LOG_DIR/monitor.log
+StandardError=append:$LOG_DIR/monitor.log
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # 重新加载systemd配置
+    systemctl daemon-reload
+
+    # 启用并启动服务
+    if systemctl enable traffic-monitor && systemctl start traffic-monitor; then
+        log_success "实时监控服务启动成功"
+        log_info "服务状态: systemctl status traffic-monitor"
+        log_info "查看日志: journalctl -u traffic-monitor -f"
+    else
+        log_error "实时监控服务启动失败"
+        log_info "可以手动启动: $INSTALL_DIR/$MONITOR_SCRIPT_NAME start &"
+    fi
 }
 
 # 测试脚本
@@ -322,12 +522,21 @@ show_info() {
     echo -e "${BLUE}定时任务:${NC} $CRON_SCHEDULE"
     echo
     echo -e "${YELLOW}常用命令:${NC}"
-    echo "  手动运行: $INSTALL_DIR/$SCRIPT_NAME"
-    echo "  查看日志: tail -f $LOG_DIR/telegram_success.log"
-    echo "  查看执行日志: tail -f $LOG_DIR/cron.log"
+    echo "  手动运行统计: $INSTALL_DIR/$SCRIPT_NAME"
+    echo "  查看统计日志: tail -f $LOG_DIR/telegram_success.log"
+    echo "  查看定时日志: tail -f $LOG_DIR/cron.log"
     echo "  查看系统定时任务: cat /etc/crontab | grep vnstat"
     echo "  查看用户定时任务: crontab -l"
     echo "  vnstat状态: systemctl status vnstat"
+
+    if [[ -f "$INSTALL_DIR/$MONITOR_SCRIPT_NAME" ]]; then
+        echo
+        echo "  实时监控服务: systemctl status traffic-monitor"
+        echo "  监控日志: tail -f $LOG_DIR/monitor.log"
+        echo "  异常告警记录: tail -f $LOG_DIR/alerts.log"
+        echo "  手动启动监控: $INSTALL_DIR/$MONITOR_SCRIPT_NAME start &"
+        echo "  监控配置: $INSTALL_DIR/$MONITOR_SCRIPT_NAME config"
+    fi
     echo
     echo -e "${YELLOW}注意事项:${NC}"
     echo "• vnstat需要运行一段时间才能收集到准确数据"
@@ -345,37 +554,219 @@ cleanup() {
     fi
 }
 
-# 主函数
-main() {
-    trap cleanup EXIT
-
+# 显示安装菜单
+show_menu() {
     echo -e "${BLUE}"
     echo "========================================"
     echo "    服务器流量监控自动安装脚本"
     echo "========================================"
     echo -e "${NC}"
+    echo
+    echo -e "${YELLOW}请选择要安装的功能:${NC}"
+    echo
+    echo "1) 流量统计通知 - 定期发送vnstat流量统计报告"
+    echo "   • 基于vnstat历史数据"
+    echo "   • 支持日报/周报/月报"
+    echo "   • Telegram推送"
+    echo
+    echo "2) 实时流量监控 - 检测异常流量并告警"
+    echo "   • 5-15分钟间隔检测"
+    echo "   • 异常流量实时告警"
+    echo "   • 后台服务运行"
+    echo
+    echo "3) 完整安装 - 同时安装上述两个功能"
+    echo
+    echo "4) 卸载功能"
+    echo
+    echo "0) 退出"
+    echo
+}
+
+# 流量统计通知安装
+install_traffic_report() {
+    log_info "安装流量统计通知功能..."
 
     check_root
     detect_system
     install_vnstat
     create_directories
+
+    # 只下载vnstat通知脚本
+    if [[ -f "./sh/$SCRIPT_NAME" ]]; then
+        log_info "使用本地vnstat通知脚本"
+        cp "./sh/$SCRIPT_NAME" "$INSTALL_DIR/$SCRIPT_NAME"
+    else
+        log_info "从GitHub下载vnstat通知脚本: $SCRIPT_URL"
+        if ! curl -fsSL "$SCRIPT_URL" -o "$INSTALL_DIR/$SCRIPT_NAME"; then
+            log_error "vnstat通知脚本下载失败"
+            exit 1
+        fi
+    fi
+    chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
+
+    # 配置vnstat通知
+    configure_traffic_report
+    setup_report_crontab
+    test_script
+    show_report_info
+
+    log_success "流量统计通知安装完成!"
+}
+
+# 实时流量监控安装
+install_traffic_monitor() {
+    log_info "安装实时流量监控功能..."
+
+    check_root
+    detect_system
+    create_directories
+
+    # 只下载实时监控脚本
+    if [[ -f "./sh/$MONITOR_SCRIPT_NAME" ]]; then
+        log_info "使用本地实时监控脚本"
+        cp "./sh/$MONITOR_SCRIPT_NAME" "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"
+    else
+        log_info "从GitHub下载实时监控脚本: $MONITOR_SCRIPT_URL"
+        if ! curl -fsSL "$MONITOR_SCRIPT_URL" -o "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"; then
+            log_error "实时监控脚本下载失败"
+            exit 1
+        fi
+    fi
+    chmod +x "$INSTALL_DIR/$MONITOR_SCRIPT_NAME"
+
+    # 配置实时监控
+    configure_traffic_monitor
+    setup_monitor_service
+    show_monitor_info
+
+    log_success "实时流量监控安装完成!"
+}
+
+# 完整安装
+install_complete() {
+    log_info "开始完整安装..."
+
+    check_root
+    detect_system
+    install_vnstat
+    create_directories
+
+    # 下载两个脚本
     download_script
     configure_script
     setup_crontab
     test_script
     show_info
 
-    log_success "安装完成!"
+    log_success "完整安装完成!"
+}
+
+# 主函数
+main() {
+    trap cleanup EXIT
+
+    show_menu
+
+    read -p "请选择 (0-4): " choice
+
+    case $choice in
+        1)
+            install_traffic_report
+            ;;
+        2)
+            install_traffic_monitor
+            ;;
+        3)
+            install_complete
+            ;;
+        4)
+            detect_system
+            uninstall
+            ;;
+        0)
+            log_info "退出安装"
+            exit 0
+            ;;
+        *)
+            log_error "无效选择: $choice"
+            exit 1
+            ;;
+    esac
+}
+
+# 显示流量统计通知安装信息
+show_report_info() {
+    echo
+    echo -e "${GREEN}========================================${NC}"
+    echo -e "${GREEN}    流量统计通知安装完成!${NC}"
+    echo -e "${GREEN}========================================${NC}"
+    echo
+    echo -e "${BLUE}安装位置:${NC} $INSTALL_DIR/$SCRIPT_NAME"
+    echo -e "${BLUE}日志位置:${NC} $LOG_DIR/"
+    echo -e "${BLUE}定时任务:${NC} $CRON_SCHEDULE"
+    echo
+    echo -e "${YELLOW}常用命令:${NC}"
+    echo "  手动运行: $INSTALL_DIR/$SCRIPT_NAME"
+    echo "  查看日志: tail -f $LOG_DIR/telegram_success.log"
+    echo "  查看定时日志: tail -f $LOG_DIR/cron.log"
+    echo "  查看定时任务: cat /etc/crontab | grep vnstat"
+    echo "  vnstat状态: systemctl status vnstat"
+    echo
+    echo -e "${YELLOW}注意事项:${NC}"
+    echo "• vnstat需要运行一段时间才能收集到准确数据"
+    echo "• 首次运行可能使用默认示例数据"
+    echo
+}
+
+# 显示实时监控安装信息
+show_monitor_info() {
+    echo
+    echo -e "${GREEN}========================================${NC}"
+    echo -e "${GREEN}    实时流量监控安装完成!${NC}"
+    echo -e "${GREEN}========================================${NC}"
+    echo
+    echo -e "${BLUE}安装位置:${NC} $INSTALL_DIR/$MONITOR_SCRIPT_NAME"
+    echo -e "${BLUE}日志位置:${NC} $LOG_DIR/"
+    echo -e "${BLUE}服务状态:${NC} systemctl status traffic-monitor"
+    echo
+    echo -e "${YELLOW}常用命令:${NC}"
+    echo "  查看服务状态: systemctl status traffic-monitor"
+    echo "  重启监控服务: systemctl restart traffic-monitor"
+    echo "  查看实时日志: journalctl -u traffic-monitor -f"
+    echo "  查看监控日志: tail -f $LOG_DIR/monitor.log"
+    echo "  查看异常记录: tail -f $LOG_DIR/alerts.log"
+    echo "  手动配置: $INSTALL_DIR/$MONITOR_SCRIPT_NAME config"
+    echo
+    echo -e "${YELLOW}注意事项:${NC}"
+    echo "• 监控服务在后台持续运行"
+    echo "• 检测到异常流量会立即发送告警"
+    echo "• 可根据需要调整告警阈值"
+    echo
 }
 
 # 帮助信息
 show_help() {
     echo "用法: $0 [选项]"
     echo
+    echo "交互式安装 (推荐):"
+    echo "  $0              显示安装菜单"
+    echo
     echo "选项:"
-    echo "  -h, --help     显示帮助信息"
-    echo "  -u, --url URL  指定脚本下载URL"
-    echo "  --uninstall    卸载流量监控系统"
+    echo "  -h, --help      显示帮助信息"
+    echo "  --report        直接安装流量统计通知功能"
+    echo "  --monitor       直接安装实时流量监控功能"
+    echo "  --complete      直接安装完整功能"
+    echo "  --uninstall     卸载已安装的功能"
+    echo
+    echo "功能说明:"
+    echo "  流量统计通知   - 基于vnstat的定期流量报告 (定时任务)"
+    echo "  实时流量监控   - 异常流量检测和告警 (后台服务)"
+    echo "  完整安装       - 同时安装上述两个功能"
+    echo
+    echo "示例:"
+    echo "  $0 --report     只安装流量统计通知"
+    echo "  $0 --monitor    只安装实时流量监控"
+    echo "  $0 --complete   安装完整功能"
     echo
 }
 
@@ -421,9 +812,14 @@ case "$1" in
         show_help
         exit 0
         ;;
-    -u|--url)
-        SCRIPT_URL="$2"
-        main
+    --report)
+        install_traffic_report
+        ;;
+    --monitor)
+        install_traffic_monitor
+        ;;
+    --complete)
+        install_complete
         ;;
     --uninstall)
         detect_system
